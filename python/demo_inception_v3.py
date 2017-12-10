@@ -148,5 +148,5 @@ if __name__ == '__main__':
         plt.imshow(undo_image_avg(image_perturbed[0, :, :, :]).astype(dtype='uint8'), interpolation=None)
         plt.title(str_label_perturbed)
 
-        plt.savefig(os.path.join('data', 'result_side_by_side.png')
+        plt.savefig(os.path.join('data', 'result_side_by_side.png'))
         #plt.show()
