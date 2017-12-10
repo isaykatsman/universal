@@ -90,7 +90,7 @@ def create_imagenet_npy(path_train_imagenet, len_batch=10000):
 
     # path_train_imagenet = '/datasets2/ILSVRC2012/train';
 
-    sz_img = [224, 224]
+    sz_img = [299, 299]
     num_channels = 3
     num_classes = 1000
 
