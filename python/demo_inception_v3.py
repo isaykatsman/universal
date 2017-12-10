@@ -36,8 +36,8 @@ if __name__ == '__main__':
     argv = sys.argv[1:]
 
     # Default values
-    path_train_imagenet = '/nfs01/data/imagenet-original/ILSVRC2012_img_train_caffemapping'
-    path_val_imagenet = '/nfs01/data/imagenet-original/ILSVRC2012_img_val_caffemapping'
+    path_train_imagenet = '/nfs01/data/imagenet-original/ILSVRC2012_img_train'
+    path_val_imagenet = '/nfs01/data/imagenet-original/ILSVRC2012_img_val'
     path_test_image = 'data/test_img.png'
     
     try:
@@ -76,7 +76,7 @@ if __name__ == '__main__':
         persisted_sess.graph.get_operations()
 
         persisted_input = persisted_sess.graph.get_tensor_by_name("input:0")
-        persisted_output = persisted_sess.graph.get_tensor_by_name("softmax2_pre_activation:0")
+        persisted_output = persisted_sess.graph.get_tensor_by_name("InceptionV3/Predictions/Softmax:0")
 
         print('>> Computing feedforward function...')
         def f(image_inp): return persisted_sess.run(persisted_output, feed_dict={persisted_input: np.reshape(image_inp, (-1, 224, 224, 3))})
