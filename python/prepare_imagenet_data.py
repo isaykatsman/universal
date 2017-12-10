@@ -39,11 +39,51 @@ def preprocess_image_batch(image_paths, img_size=None, crop_size=None, color_mod
     else:
         return img_batch
 
+def preprocess_image_batch_v3(image_paths, img_size=None, crop_size=None, color_mode="rgb", out=None):
+    img_list = []
+
+    for im_path in image_paths:
+        img = imread(im_path, mode='RGB')
+        if img_size:
+            img = imresize(img,img_size)
+
+        img = img.astype('float32')
+
+        img /= 255.
+        img -= 0.5
+        img *= 2.
+        # We permute the colors to get them in the BGR order
+        # if color_mode=="bgr":
+        #    img[:,:,[0,1,2]] = img[:,:,[2,1,0]]
+
+        if crop_size:
+            img = img[(img_size[0] - crop_size[0]) // 2:(img_size[0] + crop_size[0]) // 2, (img_size[1]-crop_size[1])//2:(img_size[1]+crop_size[1])//2, :];
+
+        img_list.append(img)
+
+    try:
+        img_batch = np.stack(img_list, axis=0)
+    except:
+        raise ValueError('when img_size and crop_size are None, images'
+                ' in image_paths must have the same shapes.')
+
+    if out is not None and hasattr(out, 'append'):
+        out.append(img_batch)
+    else:
+        return img_batch
+
 def undo_image_avg(img):
     img_copy = np.copy(img)
     img_copy[:, :, 0] = img_copy[:, :, 0] + 123.68
     img_copy[:, :, 1] = img_copy[:, :, 1] + 116.779
     img_copy[:, :, 2] = img_copy[:, :, 2] + 103.939
+    return img_copy
+
+def undo_inception_v3_preprocess(img):
+    img_copy = np.copy(img)
+    img_copy /= 2.
+    img_copy += 0.5
+    img_copy *= 255.
     return img_copy
 
 def create_imagenet_npy(path_train_imagenet, len_batch=10000):
@@ -78,7 +118,8 @@ def create_imagenet_npy(path_train_imagenet, len_batch=10000):
         for u in range(num_imgs_per_batch):
             print('Processing image number ', it)
             path_img = os.path.join(dirs[k], Matrix[k][u])
-            image = preprocess_image_batch([path_img],img_size=(256,256), crop_size=(224,224), color_mode="rgb")
+            #image = preprocess_image_batch([path_img],img_size=(256,256), crop_size=(224,224), color_mode="rgb")
+            image = preprocess_image_batch_v3([path_img],img_size=(299,299), crop_size=(299,299), color_mode="rgb")
             im_array[it:(it+1), :, :, :] = image
             it = it + 1
 

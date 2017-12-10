@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np
 from tensorflow.python.platform import gfile
 import os.path
-from prepare_imagenet_data import preprocess_image_batch, create_imagenet_npy, undo_image_avg
+from prepare_imagenet_data import preprocess_image_batch, preprocess_image_batch_v3, create_imagenet_npy, undo_image_avg, undo_inception_v3_preprocess
 import matplotlib.pyplot as plt
 import sys, getopt
 import zipfile
@@ -79,7 +79,7 @@ if __name__ == '__main__':
         persisted_output = persisted_sess.graph.get_tensor_by_name("InceptionV3/Predictions/Softmax:0")
 
         print('>> Computing feedforward function...')
-        def f(image_inp): return persisted_sess.run(persisted_output, feed_dict={persisted_input: np.reshape(image_inp, (-1, 224, 224, 3))})
+        def f(image_inp): return persisted_sess.run(persisted_output, feed_dict={persisted_input: np.reshape(image_inp, (-1, 299, 299, 3))})
 
         file_perturbation = os.path.join('data', 'universal.npy')
 
@@ -127,12 +127,12 @@ if __name__ == '__main__':
         # Test the perturbation on the image
         labels = open(os.path.join('data', 'labels.txt'), 'r').read().split('\n')
 
-        image_original = preprocess_image_batch([path_test_image], img_size=(256, 256), crop_size=(224, 224), color_mode="rgb")
+        image_original = preprocess_image_batch_v3([path_test_image], img_size=(299, 299), crop_size=(299, 299), color_mode="rgb")
         label_original = np.argmax(f(image_original), axis=1).flatten()
         str_label_original = labels[np.int(label_original)-1].split(',')[0]
 
         # Clip the perturbation to make sure images fit in uint8
-        clipped_v = np.clip(undo_image_avg(image_original[0,:,:,:]+v[0,:,:,:]), 0, 255) - np.clip(undo_image_avg(image_original[0,:,:,:]), 0, 255)
+        clipped_v = np.clip(undo_inception_v3_preprocess(image_original[0,:,:,:]+v[0,:,:,:]), 0, 255) - np.clip(undo_inception_v3_preprocess(image_original[0,:,:,:]), 0, 255)
 
         image_perturbed = image_original + clipped_v[None, :, :, :]
         label_perturbed = np.argmax(f(image_perturbed), axis=1).flatten()
@@ -141,11 +141,11 @@ if __name__ == '__main__':
         # Show original and perturbed image
         plt.figure()
         plt.subplot(1, 2, 1)
-        plt.imshow(undo_image_avg(image_original[0, :, :, :]).astype(dtype='uint8'), interpolation=None)
+        plt.imshow(undo_inception_v3_preprocess(image_original[0, :, :, :]).astype(dtype='uint8'), interpolation=None)
         plt.title(str_label_original)
 
         plt.subplot(1, 2, 2)
-        plt.imshow(undo_image_avg(image_perturbed[0, :, :, :]).astype(dtype='uint8'), interpolation=None)
+        plt.imshow(undo_inception_v3_preprocess(image_perturbed[0, :, :, :]).astype(dtype='uint8'), interpolation=None)
         plt.title(str_label_perturbed)
 
         plt.savefig(os.path.join('data', 'result_side_by_side.png'))
